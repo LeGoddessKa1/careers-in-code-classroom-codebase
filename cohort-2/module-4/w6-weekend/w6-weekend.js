@@ -3,6 +3,8 @@
 // Weekend project: Organize and simplify this program
 // by moving repeated code into reusable functions
 
+
+const promptSync = require('prompt-sync')({ signint: true });
 const DICE_SYMBOLS = [
   '\u2680',  // ⚀
   '\u2681',  // ⚁

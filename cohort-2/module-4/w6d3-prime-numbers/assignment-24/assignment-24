@@ -34,3 +34,5 @@ console.log(isPrime(100));
 console.log(primes.map(n => isPrime(n)));
 console.log(primes);
 console.log('goodbye!');
+
+
