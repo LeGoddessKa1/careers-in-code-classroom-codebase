@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        SimplySerenity1111
+    </title>
+</head>
+
+<body>
+    <div>
+        <img src="images/wireFramePicture.png" style="width: 100px;" alt="alternatetext">
+        <h1>
+            Spiritual Guidance and Empowerment
+        </h1>
+
+        <!-- My navigation begins here -->
+        <a href="url">Home</a>
+        <a href="url">Book</a>
+        <a href="url">About</a>
+        <a href="url">Services</a>
+        <a href="url">Testimonials</a>
+        <a href="url">Plans and Pricing</a>
+        <!-- My Navigation ends here -->
+
+        <!-- My content begins here -->
+
+        <!-- Home -->
+        <h2>
+            Home
+        </h2>
+        <p>
+            This is where im going to give a summary of my website and business
+        </p>
+
+
+        <!-- Book -->
+        <h2>
+            Book
+        </h2>
+        <p>
+            This is where im going to tell you how to book me
+        </p>
+
+
+
+        <!-- About -->
+        <h2>
+            About
+        </h2>
+        <p>
+            This is where im going to tell you about me
+        </p>
+
+
+        <!-- Services -->
+        <h2>
+            Services and Pricing
+        </h2>
+        <p>
+            This is where im going to give a summary of my Services
+        </p>
+
+
+        <!-- Testimonials -->
+        <h2>
+            Testimonials
+        </h2>
+        <p>
+            This is where I will list my customer Testimonials
+        </p>
+    
+        
+
+        
+
+
+
+        <!--  -->
+
+
+        <!-- My content ends here -->
+
+
+    </div>
+    <script src="myScript.js">
+
+
+
+        const { decks } = require('cards');
+        const deck = new decks.TarotDeck({ trumpSuit: 'modern' });
+        deck.shuffleAll();
+        const card = deck.draw(1)[0];
+        console.log(card);
+        const cardName = `${card.rank.longName} of ${card.suit.name}`;
+        console.log(`You picked: ${cardName}`);
+
+    </script>
+
+
+
+</body>
+
+</html>
