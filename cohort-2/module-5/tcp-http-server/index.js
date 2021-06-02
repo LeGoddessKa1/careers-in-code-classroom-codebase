@@ -4,6 +4,7 @@ const path = require('path');
 const uuid = require('uuid');
 const session = require('express-session');
 const fs = require('fs');
+const fetch = require('node-fetch');
 
 const sessionMiddleware = session({
   secret: 'wxSA9TipQyLdKUNmPSaVpVnDDdh3pk/FadecsBcYVl',
@@ -115,15 +116,33 @@ app.use((req, res, next) => {
   });
 });
 
+app.use((req, res, next) => {
+  if (req.headers['host'] === 'hackupstate.com') {
+    fetch(`https://hackupstate.com/${req.originalUrl}`, { headers: req.headers }).then(r => {
+      res.status(res.statusCode);
+      r.body.pipe(res);
+    });
+    return
+  }
+  if (req.headers['host'] === 'careersincode.org') {
+    fetch(`https://hackupstate.com/${req.originalUrl}`, { headers: req.headers }).then(r => {
+      res.status(res.statusCode);
+      r.body.pipe(res);
+    });
+    return
+  }
+  next();
+});
+
 // Home page
 app.get('/', (req, res) => res.status(200).sendFile(path.join(__dirname, 'index.html')))
 app.get('/styles.css', (req, res) => res.status(200).sendFile(path.join(__dirname, '/styles.css')))
 
 // Day 2, Day 3, Day 4
-app.get('/fruit', (req, res) => res.status(200).send('Apples, Oranges, Banannas'));
+app.get('/fruit', (req, res) => res.status(200).send('Apples, Oranges, Bananas'));
 app.get('/apples', (req, res) => res.status(200).send('Apples!'));
 app.get('/oranges', (req, res) => res.status(200).send('Oranges.'));
-app.post('/banannas', (req, res) => res.status(200).send('Banannas?'));
+app.post('/bananas', (req, res) => res.status(200).send('Bananas?'));
 app.post('/echo', (req, res) => res.status(200).send(req.body));
 function frequencies(body) {
   const words = body.toString().split(' ');
@@ -134,9 +153,11 @@ function frequencies(body) {
 }
 app.post('/text-processing/most-common-word', (req, res) => {
   const freqs = frequencies(req.body);
-  const maxKey = Math.max.apply(Math, Object.keys(frequencies).map(key => parseInt(key, 10)));
-  res.status(200);
-  res.send(freqs[maxKey.toString()]);
+  const entries = Object.entries(freqs);
+  const keys = entries.map(i => i[0]), values = entries.map(i => i[1]);
+  const max = Math.max.apply(Math, values);
+  const maxKey = keys[values.indexOf(max)]
+  res.status(200).send(maxKey+'\n');
 });
 app.post('/text-processing/frequencies', (req, res) => {
   const freqs = frequencies(req.body);
@@ -154,15 +175,15 @@ app.get('/lockbox', (req, res) => {
 // Day 5: Headers
 const TOKENS = [];
 app.post('/tokens', (req, res) => {
-  const token = uuid.v4().replace('-', '');
-  token.push({
+  const token = uuid.v4().replace(/-/g, '');
+  TOKENS.push({
     key: token,
     permissions: ['read'],
   });
   res.status(201).send(`Your token was created! It is ${token}.`);
 });
 app.get('/protected-resource', (req, res) => {
-  const parts = req.headers['Authorization'];
+  const parts = (req.headers['authorization'] || '').split(' ');
   if (parts.length < 2) {
     return res.status(401).send('You did not specify a token, that is required for this endpoint.');
   }
@@ -176,36 +197,56 @@ app.get('/protected-resource', (req, res) => {
   return res.status(200).send('You specified a valid token! Thank you.');
 });
 
+app.post('/image-upload', (req, res) => {
+  if (!req.headers['content-type']) {
+    res.status(400).send('Please sent a content type!');
+  }
+  if (!['image/png', 'image/jpeg'].includes(req.headers['content-type'])) {
+    res.status(400).send('Image data unable to be processed - ensure you specify the correct content-type!');
+  }
+  res.status(200).send('Image successfully received, thanks!');
+});
+
 // Day 6: JSON
+app.get('/users1', (req, res) => {
+  res.status(200).send('Ryan Gaus-teacher-201 E Jefferson St-Syracuse-NY;Suzie John-student-235 Harrison St-Syracuse-NY');
+});
+app.get('/users2', (req, res) => {
+  res.status(200).send('Ryan Gaus-teacher-201 E Jefferson St-Syracuse-NY-13202;Suzie John-student-235 Harrison St-Syracuse-NY-13202');
+});
+app.get('/users3', (req, res) => {
+  res.status(200).send('Ryan Gaus-201 E Jefferson St-Syracuse-NY-13202;Suzie John-235 Harrison St-Syracuse-NY-13202');
+});
+app.get('/users4', (req, res) => {
+  res.status(200).send('Jean-Luc Picard-teacher-201 E Jefferson St-Syracuse-NY;Suzie John-student-235 Harrison St-Syracuse-NY');
+});
 app.get('/json', (req, res) => res.status(200).send({
   hello: 'world',
   numbers: [1, 2, 3, 4, 5],
 }));
-app.get('/number-list', (req, res) => res.status(200).send({
-  numbers: [
-    7529,
-    5824,
-    78,
-    627,
-    598,
-    3151,
-    3857,
-    12,
-    3,
-    52614,
-    395,
-    817,
-    36,
-    4781,
-    39,
-    75,
-    42,
-    3856,
-    7143,
-    1085,
-    26,
-  ],
-}));
+app.get('/number-list', (req, res) => res.status(200).send([
+  7529,
+  5824,
+  78,
+  627,
+  598,
+  3151,
+  3857,
+  12,
+  3,
+  52614,
+  395,
+  817,
+  36,
+  4781,
+  39,
+  75,
+  42,
+  3856,
+  7143,
+  1085,
+  26,
+]));
 
 // Day 7: REST API design
 app.get('/users', (req, res) => {
@@ -240,7 +281,7 @@ function getFile(filename) {
   }
 }
 function saveFile(filename, data) {
-  fs.writeFileSync(filename, JSON.stringify(data));
+  fs.writeFileSync(filename, JSON.stringify(data, null, 2));
 }
 const STUDENTS_FILE = '/tmp/students.json';
 const ASSIGNMENTS_FILE = '/tmp/assignments.json';
@@ -248,6 +289,11 @@ const STUDENTS = getFile(STUDENTS_FILE);
 const ASSIGNMENTS = getFile(ASSIGNMENTS_FILE);
 
 function studentsCreate(req, res) {
+  if (typeof req.body === 'string') {
+    res.status(400).send({detail: "Body is not formatted correctly!"});
+    return
+  }
+
   const student = {...req.body, id: uuid.v4()};
   STUDENTS.push(student);
   res.status(201);
@@ -257,6 +303,11 @@ function studentsCreate(req, res) {
 }
 app.post('/students', studentsCreate);
 function studentsReadByIdAssignmentsCreate(req, res) {
+  if (typeof req.body === 'string') {
+    res.status(400).send({detail: "Body is not formatted correctly!"});
+    return
+  }
+
   const assignment = {...req.body, id: uuid.v4(), studentId: req.params.id};
   ASSIGNMENTS.push(assignment);
   res.status(201);
@@ -319,6 +370,11 @@ app.get('/students/:id/assignments/:aid', studentsReadByIdAssignmentsReadById);
 
 // Update
 function studentsUpdate(req, res) {
+  if (typeof req.body === 'string') {
+    res.status(400).send({detail: "Body is not formatted correctly!"});
+    return
+  }
+
   for (let i = 0; i < STUDENTS.length; i++) {
     if (STUDENTS[i].id === req.params.id) {
       STUDENTS[i] = Object.assign({}, STUDENTS[i], req.body);
@@ -336,6 +392,11 @@ function studentsUpdate(req, res) {
 }
 app.put('/students/:id', studentsUpdate);
 function studentsAssignmentsUpdate(req, res) {
+  if (typeof req.body === 'string') {
+    res.status(400).send({detail: "Body is not formatted correctly!"});
+    return
+  }
+
   for (let i = 0; i < ASSIGNMENTS.length; i++) {
     const assignment = ASSIGNMENTS[i];
     if (assignment.id === req.params.aid && assignment.studentId === req.params.id) {
@@ -388,6 +449,94 @@ function studentsAssignmentsDelete(req, res) {
   saveFile(ASSIGNMENTS_FILE, ASSIGNMENTS);
 }
 app.delete('/students/:id/assignments/:aid', studentsAssignmentsDelete);
+
+
+
+
+
+
+
+
+
+
+
+
+const CARS_FILE = '/tmp/cars.json';
+const CARS = getFile(CARS_FILE);
+
+function carsCreate(req, res) {
+  if (typeof req.body === 'string') {
+    res.status(400).send({detail: "Body is not formatted correctly!"});
+    return
+  }
+
+  const car = {...req.body, id: uuid.v4()};
+  CARS.push(car);
+  res.status(201).send(car);
+
+  saveFile(CARS_FILE, CARS);
+}
+app.post('/cars', carsCreate);
+
+// Read
+function carsReadList(req, res) {
+  res.status(200).send({results: CARS});
+}
+app.get('/cars', carsReadList);
+function carsReadById(req, res) {
+  for (let i = 0; i < CARS.length; i++) {
+    const car = CARS[i];
+    if (car.id === req.params.id) {
+      res.status(200).send(car);
+      return;
+    }
+  }
+  res.status(404).send({detail: 'No such car with id '+req.params.id+' exists!'});
+}
+app.get('/cars/:id', carsReadById);
+
+// Update
+function carsUpdate(req, res) {
+  if (typeof req.body === 'string') {
+    res.status(400).send({detail: "Body is not formatted correctly!"});
+    return
+  }
+
+  for (let i = 0; i < CARS.length; i++) {
+    if (CARS[i].id === req.params.id) {
+      CARS[i] = Object.assign({}, CARS[i], req.body);
+
+      res.status(200);
+      res.send(CARS[i]);
+      saveFile(CARS_FILE, CARS);
+      return;
+    }
+  }
+  res.status(404);
+  res.send({detail: 'No such car with id '+req.params.id+' exists!'});
+
+  saveFile(CARS_FILE, CARS);
+}
+app.put('/cars/:id', carsUpdate);
+
+// Delete
+function carsDelete(req, res) {
+  for (let i = 0; i < CARS.length; i++) {
+    if (CARS[i].id === req.params.id) {
+      CARS.splice(i, 1);
+      res.status(204).end();
+      return;
+    }
+  }
+  res.status(404);
+  res.send({detail: 'No such car with id '+req.params.id+' exists!'});
+
+  saveFile(CARS_FILE, CARS);
+}
+app.delete('/cars/:id', carsDelete);
+
+
+
 
 // Mock version of Joey's API
 const PRODUCT_DATABASE = require('./joey-api-mock-data');
