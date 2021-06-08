@@ -1,9 +1,10 @@
-import { HomePage } from "./components/HomePage/HomePage"
+import { Layout } from "./components/Layout/Layout.js"
+
 
 function App() {
   return (
     <div className="App">
-      <HomePage />
+     
     </div>
   )
 }
